@@ -172,3 +172,39 @@ label {
   flex-direction: row;
   width: 100%;
 }
+
+.private-messages {
+  margin-top: 20px;
+  flex: 2;
+}
+
+.private-chat {
+  font-size: 14px;
+  padding: 5px 8px;
+  margin: 2px 0px;
+  cursor: pointer;
+  color: #ccc;
+}
+
+.private-chat:hover {
+  background-color: #5c4a57;
+}
+
+.private-chat-active {
+  background-color: #4f9689;
+  color: white;
+}
+
+.user-online {
+  cursor: pointer;
+  padding: 2px 0px;
+}
+
+.user-online:hover {
+  color: #4f9689;
+}
+
+.private-message-indicator {
+  color: #4f9689;
+  font-weight: bold;
+}

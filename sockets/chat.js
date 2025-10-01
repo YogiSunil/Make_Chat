@@ -1,6 +1,6 @@
 //chat.js
-//Make sure to add channels to module.exports parameters
-module.exports = (io, socket, onlineUsers, channels) => {
+//Make sure to add channels and privateMessages to module.exports parameters
+module.exports = (io, socket, onlineUsers, channels, privateMessages) => {
 
   socket.on('new user', (username) => {
     //Save the username as key to access the user's socket id
@@ -48,6 +48,45 @@ module.exports = (io, socket, onlineUsers, channels) => {
     socket.emit('user changed channel', {
       channel : newChannel,
       messages : channels[newChannel]
+    });
+  });
+
+  // Handle private messages
+  socket.on('private message', (data) => {
+    let privateKey = [data.sender, data.recipient].sort().join('-');
+    
+    // Initialize private message array if it doesn't exist
+    if(!privateMessages[privateKey]) {
+      privateMessages[privateKey] = [];
+    }
+    
+    // Save the private message
+    privateMessages[privateKey].push({
+      sender: data.sender,
+      message: data.message,
+      timestamp: new Date()
+    });
+    
+    // Send message to recipient if they're online
+    let recipientSocketId = onlineUsers[data.recipient];
+    if(recipientSocketId) {
+      io.to(recipientSocketId).emit('private message', {
+        sender: data.sender,
+        message: data.message
+      });
+    }
+    
+    console.log(`💬 Private message from ${data.sender} to ${data.recipient}: ${data.message}`);
+  });
+
+  // Handle private message history requests
+  socket.on('get private messages', (otherUser) => {
+    let privateKey = [socket.username, otherUser].sort().join('-');
+    let messages = privateMessages[privateKey] || [];
+    
+    socket.emit('private message history', {
+      otherUser: otherUser,
+      messages: messages
     });
   });
 

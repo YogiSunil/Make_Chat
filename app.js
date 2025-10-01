@@ -7,10 +7,12 @@ const io = require('socket.io')(server);
 let onlineUsers = {};
 //Save the channels in this object.
 let channels = {"General" : []};
+//Save private messages
+let privateMessages = {};
 
 io.on("connection", (socket) => {
   // Make sure to send the channels to our chat file
-  require('./sockets/chat.js')(io, socket, onlineUsers, channels);
+  require('./sockets/chat.js')(io, socket, onlineUsers, channels, privateMessages);
 })
 
 const exphbs  = require('express-handlebars');

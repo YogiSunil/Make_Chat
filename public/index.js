@@ -13,6 +13,23 @@ $(document).ready(() => {
   $(document).on('click', '.channel', (e)=>{
     let newChannel = e.target.textContent;
     socket.emit('user changed channel', newChannel);
+    // Clear private chat selection
+    $('.private-chat-active').removeClass('private-chat-active');
+    $('.channel-current').removeClass('private-message-indicator');
+  });
+
+  //Users can start private chats by clicking on usernames
+  $(document).on('click', '.user-online', (e)=>{
+    let targetUser = e.target.textContent;
+    if(targetUser !== currentUser) {
+      startPrivateChat(targetUser);
+    }
+  });
+
+  //Users can switch between private chats
+  $(document).on('click', '.private-chat', (e)=>{
+    let targetUser = e.target.textContent.replace(' (Private)', '');
+    switchToPrivateChat(targetUser);
   });
 
   $('#create-user-btn').click((e)=>{
@@ -29,19 +46,53 @@ $(document).ready(() => {
 
   $('#send-chat-btn').click((e) => {
     e.preventDefault();
-    // Get the client's channel
-    let channel = $('.channel-current').text();
     let message = $('#chat-input').val();
     if(message.length > 0) {
-      socket.emit('new message', {
-        sender : currentUser,
-        message : message,
-        //Send the channel over to the server
-        channel : channel
-      });
+      // Check if we're in a private chat
+      let activePrivateChat = $('.private-chat-active').text().replace(' (Private)', '');
+      if(activePrivateChat) {
+        // Send private message
+        socket.emit('private message', {
+          sender: currentUser,
+          recipient: activePrivateChat,
+          message: message
+        });
+      } else {
+        // Send channel message
+        let channel = $('.channel-current').text();
+        socket.emit('new message', {
+          sender : currentUser,
+          message : message,
+          channel : channel
+        });
+      }
       $('#chat-input').val("");
     }
   });
+
+  // Helper functions for private messaging
+  function startPrivateChat(targetUser) {
+    // Check if private chat already exists
+    if($(`.private-chat:contains('${targetUser}')`).length === 0) {
+      $('.private-chats-list').append(`<div class="private-chat">${targetUser} (Private)</div>`);
+    }
+    switchToPrivateChat(targetUser);
+  }
+
+  function switchToPrivateChat(targetUser) {
+    // Clear channel selection
+    $('.channel-current').addClass('channel').removeClass('channel-current');
+    
+    // Set private chat as active
+    $('.private-chat-active').removeClass('private-chat-active');
+    $(`.private-chat:contains('${targetUser}')`).addClass('private-chat-active');
+    
+    // Request private message history
+    socket.emit('get private messages', targetUser);
+    
+    // Update UI to show private chat
+    $('.message-container h2').text(`Private Chat with ${targetUser}`);
+  }
 
   // Logout functionality
   $('#logout-btn').click((e) => {
@@ -136,6 +187,43 @@ $(document).ready(() => {
     $(`.channel:contains('${data.channel}')`).addClass('channel-current');
     $('.channel-current').removeClass('channel');
     $('.message').remove();
+    $('.message-container h2').text('Messages');
+    data.messages.forEach((message) => {
+      $('.message-container').append(`
+        <div class="message">
+          <p class="message-user">${message.sender}: </p>
+          <p class="message-text">${message.message}</p>
+        </div>
+      `);
+    });
+  });
+
+  // Handle incoming private messages
+  socket.on('private message', (data) => {
+    // Add private chat to list if it doesn't exist
+    if($(`.private-chat:contains('${data.sender}')`).length === 0) {
+      $('.private-chats-list').append(`<div class="private-chat">${data.sender} (Private)</div>`);
+    }
+    
+    // If we're currently in this private chat, display the message
+    let activePrivateChat = $('.private-chat-active').text().replace(' (Private)', '');
+    if(activePrivateChat === data.sender) {
+      $('.message-container').append(`
+        <div class="message">
+          <p class="message-user">${data.sender}: </p>
+          <p class="message-text">${data.message}</p>
+        </div>
+      `);
+    } else {
+      // Add notification indicator
+      $(`.private-chat:contains('${data.sender}')`).addClass('private-message-indicator');
+    }
+  });
+
+  // Handle private message history
+  socket.on('private message history', (data) => {
+    $('.message').remove();
+    $('.message-container h2').text(`Private Chat with ${data.otherUser}`);
     data.messages.forEach((message) => {
       $('.message-container').append(`
         <div class="message">
