@@ -38,6 +38,8 @@ $(document).ready(() => {
     switchToPrivateChat(targetUser);
   });
 
+
+  
   $('#create-user-btn').click((e)=>{
     e.preventDefault();
     if($('#username-input').val().length > 0){

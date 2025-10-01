@@ -15,6 +15,7 @@ chatForm.addEventListener('submit', (e) => {
     }
 });
 
+
 // Receive messages
 socket.on('chat message', (msg) => {
     const messageElement = document.createElement('li');
