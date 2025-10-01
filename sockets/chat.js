@@ -76,6 +76,13 @@ module.exports = (io, socket, onlineUsers, channels, privateMessages) => {
       });
     }
     
+    // Also send confirmation back to sender (but they won't display it since we filter it out)
+    socket.emit('private message', {
+      sender: data.sender,
+      message: data.message,
+      recipient: data.recipient
+    });
+    
     console.log(`💬 Private message from ${data.sender} to ${data.recipient}: ${data.message}`);
   });
 

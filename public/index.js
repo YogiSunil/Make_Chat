@@ -57,6 +57,18 @@ $(document).ready(() => {
           recipient: activePrivateChat,
           message: message
         });
+        
+        // Show the message immediately in the sender's chat
+        $('.message-container').append(`
+          <div class="message">
+            <p class="message-user">${currentUser}: </p>
+            <p class="message-text">${message}</p>
+          </div>
+        `);
+        
+        // Scroll to bottom
+        $('.message-container').scrollTop($('.message-container')[0].scrollHeight);
+        
       } else {
         // Send channel message
         let channel = $('.channel-current').text();
@@ -143,6 +155,9 @@ $(document).ready(() => {
           <p class="message-text">${data.message}</p>
         </div>
       `);
+      
+      // Auto-scroll to bottom
+      $('.message-container').scrollTop($('.message-container')[0].scrollHeight);
     }
   })
 
@@ -196,10 +211,20 @@ $(document).ready(() => {
         </div>
       `);
     });
+    
+    // Auto-scroll to bottom after loading history
+    setTimeout(() => {
+      $('.message-container').scrollTop($('.message-container')[0].scrollHeight);
+    }, 100);
   });
 
   // Handle incoming private messages
   socket.on('private message', (data) => {
+    // Don't show messages from ourselves (we already showed it when sending)
+    if(data.sender === currentUser) {
+      return;
+    }
+    
     // Add private chat to list if it doesn't exist
     if($(`.private-chat:contains('${data.sender}')`).length === 0) {
       $('.private-chats-list').append(`<div class="private-chat">${data.sender} (Private)</div>`);
@@ -214,6 +239,10 @@ $(document).ready(() => {
           <p class="message-text">${data.message}</p>
         </div>
       `);
+      
+      // Scroll to bottom
+      $('.message-container').scrollTop($('.message-container')[0].scrollHeight);
+      
     } else {
       // Add notification indicator
       $(`.private-chat:contains('${data.sender}')`).addClass('private-message-indicator');
@@ -232,6 +261,11 @@ $(document).ready(() => {
         </div>
       `);
     });
+    
+    // Auto-scroll to bottom after loading history
+    setTimeout(() => {
+      $('.message-container').scrollTop($('.message-container')[0].scrollHeight);
+    }, 100);
   });
 
 })
