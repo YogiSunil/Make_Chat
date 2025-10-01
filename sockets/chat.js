@@ -49,37 +49,51 @@ module.exports = (io, socket, onlineUsers, channels, privateMessages, channelMem
     let channelName = data.channelName;
     let invitedMembers = data.members || [];
     
-    // Create the new channel with member restrictions
+    // Determine if channel should be public or private
+    let isPublicChannel = invitedMembers.length === 0; // Public if no specific members invited
+    
+    // Create the new channel
     channels[channelName] = {
       messages: [],
-      members: [socket.username, ...invitedMembers], // Creator + invited members
+      members: isPublicChannel ? [] : [socket.username, ...invitedMembers], // Empty for public, specific for private
       creator: socket.username,
-      isPublic: false
+      isPublic: isPublicChannel
     };
     
     // Have the creator join the new channel room
     socket.join(channelName);
     
-    // Add invited members to the channel if they're online
-    invitedMembers.forEach(member => {
-      if (onlineUsers[member]) {
-        io.to(onlineUsers[member]).emit('channel invitation', {
-          channel: channelName,
-          invitedBy: socket.username
-        });
-      }
-    });
-    
-    // Only inform users who have access to this channel
-    channels[channelName].members.forEach(member => {
-      if (onlineUsers[member]) {
-        io.to(onlineUsers[member]).emit('new channel', {
-          name: channelName,
-          creator: socket.username,
-          members: channels[channelName].members
-        });
-      }
-    });
+    if (isPublicChannel) {
+      // For public channels, notify ALL connected users
+      io.emit('new channel', {
+        name: channelName,
+        creator: socket.username,
+        members: channels[channelName].members,
+        isPublic: true
+      });
+    } else {
+      // For private channels, send invitations to specific members
+      invitedMembers.forEach(member => {
+        if (onlineUsers[member]) {
+          io.to(onlineUsers[member]).emit('channel invitation', {
+            channel: channelName,
+            invitedBy: socket.username
+          });
+        }
+      });
+      
+      // Notify only the members who have access to this private channel
+      channels[channelName].members.forEach(member => {
+        if (onlineUsers[member]) {
+          io.to(onlineUsers[member]).emit('new channel', {
+            name: channelName,
+            creator: socket.username,
+            members: channels[channelName].members,
+            isPublic: false
+          });
+        }
+      });
+    }
     
     // Emit to the client that made the new channel, to change their channel to the one they made
     socket.emit('user changed channel', {

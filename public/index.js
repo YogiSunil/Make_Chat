@@ -39,7 +39,7 @@ $(document).ready(() => {
   });
 
 
-  
+
   $('#create-user-btn').click((e)=>{
     e.preventDefault();
     if($('#username-input').val().length > 0){
@@ -141,8 +141,27 @@ $(document).ready(() => {
     location.reload();
   });
 
-  // Open channel creation modal instead of directly creating
+  // Simple channel creation (public channel)
   $('#new-channel-btn').click(() => {
+    let newChannel = $('#new-channel-input').val().trim();
+    
+    if (newChannel.length > 0) {
+      // Create a public channel (no members selected = public)
+      socket.emit('new channel', {
+        channelName: newChannel,
+        members: []  // Empty array means public channel
+      });
+      $('#new-channel-input').val("");
+    }
+  });
+
+  // Private channel creation (opens modal)
+  $('#new-private-channel-btn').click(() => {
+    // Pre-fill the channel name if user typed something
+    let channelName = $('#new-channel-input').val().trim();
+    $('#modal-channel-name').val(channelName);
+    $('#new-channel-input').val(""); // Clear the input
+    
     $('#channel-modal').show();
     loadAvailableUsers();
   });
