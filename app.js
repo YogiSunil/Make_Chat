@@ -5,14 +5,23 @@ const server = require('http').Server(app);
 
 const io = require('socket.io')(server);
 let onlineUsers = {};
-//Save the channels in this object.
-let channels = {"General" : []};
+//Save the channels in this object with their messages and members
+let channels = {
+  "General": {
+    messages: [],
+    members: [], // Everyone can join General channel
+    creator: "system",
+    isPublic: true
+  }
+};
 //Save private messages
 let privateMessages = {};
+//Save channel memberships for access control
+let channelMemberships = {};
 
 io.on("connection", (socket) => {
   // Make sure to send the channels to our chat file
-  require('./sockets/chat.js')(io, socket, onlineUsers, channels, privateMessages);
+  require('./sockets/chat.js')(io, socket, onlineUsers, channels, privateMessages, channelMemberships);
 })
 
 const exphbs  = require('express-handlebars');

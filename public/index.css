@@ -530,3 +530,253 @@ body {
 .message:hover .message-timestamp {
   opacity: 1;
 }
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: #36393f;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80%;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  padding: 20px;
+  border-bottom: 1px solid #40444b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  color: #ffffff;
+  margin: 0;
+  font-size: 20px;
+}
+
+.close {
+  color: #b9bbbe;
+  font-size: 24px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.close:hover {
+  color: #ffffff;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  color: #b9bbbe;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+#modal-channel-name {
+  width: 100%;
+  padding: 12px;
+  background: #40444b;
+  border: 1px solid #555;
+  border-radius: 6px;
+  color: #ffffff;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+#modal-channel-name:focus {
+  border-color: #5865f2;
+}
+
+.members-selection {
+  display: flex;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.available-users,
+.selected-users {
+  flex: 1;
+}
+
+.available-users h4,
+.selected-users h4 {
+  color: #ffffff;
+  margin-bottom: 10px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.users-list {
+  background: #2f3136;
+  border: 1px solid #40444b;
+  border-radius: 6px;
+  min-height: 150px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.selectable-user {
+  padding: 8px 12px;
+  background: #40444b;
+  color: #ffffff;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background-color 0.2s ease;
+}
+
+.selectable-user:hover {
+  background: #5865f2;
+}
+
+.selectable-user:last-child {
+  margin-bottom: 0;
+}
+
+.remove-user {
+  background: #ed4245;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid #40444b;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary {
+  background: #5865f2;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #4752c4;
+}
+
+.btn-primary:disabled {
+  background: #747f8d;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #4f545c;
+  color: #ffffff;
+}
+
+.btn-secondary:hover {
+  background: #5d6269;
+}
+
+/* Notification Styles */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+  background: #36393f;
+  border-radius: 8px;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+  border-left: 4px solid #5865f2;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification-content {
+  padding: 20px;
+}
+
+.notification-content p {
+  color: #ffffff;
+  margin-bottom: 15px;
+  font-size: 14px;
+}
+
+.notification-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Channel member indicators */
+.channel-members {
+  font-size: 11px;
+  color: #72767d;
+  margin-left: 8px;
+}
+
+.channel.private-channel::before {
+  content: '🔒';
+  margin-right: 6px;
+}
+
+/* Empty state for user lists */
+.users-list:empty::after {
+  content: 'No users available';
+  color: #72767d;
+  font-style: italic;
+  display: block;
+  text-align: center;
+  padding: 20px;
+}

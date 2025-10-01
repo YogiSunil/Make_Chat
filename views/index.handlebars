@@ -26,7 +26,10 @@
         <h1 class="brand">Make Chat</h1>
         <div class="channels">
             <h2 class="channels-label">Channels</h2>
-            <div class="new-channel-form"><input id="new-channel-input" placeholder="New Channel" /><button id="new-channel-btn">Create</button></div>
+            <div class="new-channel-form">
+              <input id="new-channel-input" placeholder="New Channel" />
+              <button id="new-channel-btn">Create</button>
+            </div>
             <div class="channel-current">General</div>
         </div>
         <h2>Online Users</h2>
@@ -44,6 +47,50 @@
           </div>
           <div class="text-chat-divide"></div>
           <div class="chat-box"><textarea id="chat-input" placeholder="Type a message"></textarea><button class="btn" id="send-chat-btn">Send</button></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Channel Creation Modal -->
+    <div id="channel-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Create New Channel</h3>
+          <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="modal-channel-name">Channel Name:</label>
+            <input type="text" id="modal-channel-name" placeholder="Enter channel name" />
+          </div>
+          <div class="form-group">
+            <label>Invite Members:</label>
+            <div class="members-selection">
+              <div class="available-users">
+                <h4>Available Users</h4>
+                <div id="available-users-list" class="users-list"></div>
+              </div>
+              <div class="selected-users">
+                <h4>Selected Members</h4>
+                <div id="selected-users-list" class="users-list"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="cancel-channel-btn" class="btn-secondary">Cancel</button>
+          <button id="create-channel-btn" class="btn-primary">Create Channel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Channel Invitation Notification -->
+    <div id="invitation-notification" class="notification" style="display: none;">
+      <div class="notification-content">
+        <p id="invitation-message"></p>
+        <div class="notification-buttons">
+          <button id="accept-invitation-btn" class="btn-primary">Accept</button>
+          <button id="decline-invitation-btn" class="btn-secondary">Decline</button>
         </div>
       </div>
     </div>

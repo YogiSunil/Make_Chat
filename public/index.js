@@ -11,7 +11,13 @@ $(document).ready(() => {
 
   //Users can change the channel by clicking on its name.
   $(document).on('click', '.channel', (e)=>{
-    let newChannel = e.target.textContent;
+    // Get the channel name from the first text node (before member count)
+    let newChannel = $(e.target).contents().first().text().trim();
+    if (!newChannel) {
+      // Fallback to full text content and extract channel name
+      let fullText = $(e.target).text();
+      newChannel = fullText.replace(/\s*\(\d+\)\s*$/, '').trim();
+    }
     socket.emit('user changed channel', newChannel);
     // Clear private chat selection
     $('.private-chat-active').removeClass('private-chat-active');
@@ -71,7 +77,13 @@ $(document).ready(() => {
         
       } else {
         // Send channel message
-        let channel = $('.channel-current').text();
+        let channelElement = $('.channel-current');
+        let channel = channelElement.contents().first().text().trim();
+        if (!channel) {
+          // Fallback to full text content and extract channel name
+          let fullText = channelElement.text();
+          channel = fullText.replace(/\s*\(\d+\)\s*$/, '').trim();
+        }
         socket.emit('new message', {
           sender : currentUser,
           message : message,
@@ -127,14 +139,68 @@ $(document).ready(() => {
     location.reload();
   });
 
-  $('#new-channel-btn').click( () => {
-    let newChannel = $('#new-channel-input').val();
+  // Open channel creation modal instead of directly creating
+  $('#new-channel-btn').click(() => {
+    $('#channel-modal').show();
+    loadAvailableUsers();
+  });
 
-    if(newChannel.length > 0){
-      // Emit the new channel to the server
-      socket.emit('new channel', newChannel);
-      $('#new-channel-input').val("");
+  // Close modal handlers
+  $('.close, #cancel-channel-btn').click(() => {
+    $('#channel-modal').hide();
+    clearChannelModal();
+  });
+
+  // Create channel with selected members
+  $('#create-channel-btn').click(() => {
+    let channelName = $('#modal-channel-name').val().trim();
+    let selectedMembers = [];
+    
+    $('#selected-users-list .selectable-user').each(function() {
+      selectedMembers.push($(this).data('username'));
+    });
+
+    if (channelName.length > 0) {
+      socket.emit('new channel', {
+        channelName: channelName,
+        members: selectedMembers
+      });
+      $('#channel-modal').hide();
+      clearChannelModal();
     }
+  });
+
+  // Handle user selection for channel creation
+  $(document).on('click', '.selectable-user', function() {
+    let username = $(this).data('username');
+    let isInAvailable = $(this).closest('#available-users-list').length > 0;
+    
+    if (isInAvailable) {
+      // Move from available to selected
+      $(this).remove();
+      $('#selected-users-list').append(`
+        <div class="selectable-user" data-username="${username}">
+          <span>${username}</span>
+          <button class="remove-user">×</button>
+        </div>
+      `);
+    }
+  });
+
+  // Handle user removal from selected list
+  $(document).on('click', '.remove-user', function(e) {
+    e.stopPropagation();
+    let userDiv = $(this).closest('.selectable-user');
+    let username = userDiv.data('username');
+    
+    userDiv.remove();
+    
+    // Add back to available list
+    $('#available-users-list').append(`
+      <div class="selectable-user" data-username="${username}">
+        <span>${username}</span>
+      </div>
+    `);
   });
 
   //socket listeners
@@ -147,7 +213,13 @@ $(document).ready(() => {
   //Output the new message
   socket.on('new message', (data) => {
     //Only append the message if the user is currently in that channel
-    let currentChannel = $('.channel-current').text();
+    let channelElement = $('.channel-current');
+    let currentChannel = channelElement.contents().first().text().trim();
+    if (!currentChannel) {
+      // Fallback to full text content and extract channel name
+      let fullText = channelElement.text();
+      currentChannel = fullText.replace(/\s*\(\d+\)\s*$/, '').trim();
+    }
     if(currentChannel == data.channel) {
       $('.message-container').append(`
         <div class="message">
@@ -176,7 +248,15 @@ $(document).ready(() => {
     // Add all channels from server
     for(channelName in channels){
       if(channelName !== 'General') {
-        $('.channels').append(`<div class="channel">${channelName}</div>`);
+        let memberCount = channels[channelName].members ? channels[channelName].members.length : 0;
+        let isPrivate = !channels[channelName].isPublic;
+        let channelClass = isPrivate ? 'channel private-channel' : 'channel';
+        $('.channels').append(`
+          <div class="${channelClass}" title="${memberCount} members">
+            ${channelName}
+            <span class="channel-members">(${memberCount})</span>
+          </div>
+        `);
       }
     }
   })
@@ -190,8 +270,16 @@ $(document).ready(() => {
   });
 
   // Add the new channel to the channels list (Fires for all clients)
-  socket.on('new channel', (newChannel) => {
-    $('.channels').append(`<div class="channel">${newChannel}</div>`);
+  socket.on('new channel', (channelData) => {
+    let memberCount = channelData.members ? channelData.members.length : 0;
+    let isPrivate = !channelData.isPublic;
+    let channelClass = isPrivate ? 'channel private-channel' : 'channel';
+    $('.channels').append(`
+      <div class="${channelClass}" title="${memberCount} members">
+        ${channelData.name}
+        <span class="channel-members">(${memberCount})</span>
+      </div>
+    `);
   });
 
   // Make the channel joined the current channel. Then load the messages.
@@ -199,8 +287,16 @@ $(document).ready(() => {
   socket.on('user changed channel', (data) => {
     $('.channel-current').addClass('channel');
     $('.channel-current').removeClass('channel-current');
-    $(`.channel:contains('${data.channel}')`).addClass('channel-current');
-    $('.channel-current').removeClass('channel');
+    
+    // Find channel by checking the text content of the first text node (before member count)
+    $('.channel').each(function() {
+      let channelText = $(this).contents().first().text().trim();
+      if (channelText === data.channel) {
+        $(this).addClass('channel-current').removeClass('channel');
+        return false; // Break the loop
+      }
+    });
+    
     $('.message').remove();
     $('.message-container h2').text('Messages');
     data.messages.forEach((message) => {
@@ -267,5 +363,69 @@ $(document).ready(() => {
       $('.message-container').scrollTop($('.message-container')[0].scrollHeight);
     }, 100);
   });
+
+  // Handle channel invitations
+  socket.on('channel invitation', (data) => {
+    let invitationMessage = `${data.invitedBy} has invited you to join the channel "${data.channel}"`;
+    $('#invitation-message').text(invitationMessage);
+    $('#invitation-notification').show();
+    
+    // Store the channel name for accept/decline actions
+    $('#invitation-notification').data('channel', data.channel);
+    
+    // Auto-hide after 10 seconds
+    setTimeout(() => {
+      $('#invitation-notification').hide();
+    }, 10000);
+  });
+
+  // Handle invitation acceptance
+  $('#accept-invitation-btn').click(() => {
+    let channelName = $('#invitation-notification').data('channel');
+    socket.emit('accept channel invitation', channelName);
+    $('#invitation-notification').hide();
+  });
+
+  // Handle invitation decline
+  $('#decline-invitation-btn').click(() => {
+    $('#invitation-notification').hide();
+  });
+
+  // Handle errors
+  socket.on('error', (errorData) => {
+    alert('Error: ' + errorData.message);
+  });
+
+  // Close modal when clicking outside
+  $(window).click((event) => {
+    if (event.target.id === 'channel-modal') {
+      $('#channel-modal').hide();
+      clearChannelModal();
+    }
+  });
+
+  // Helper functions
+  function loadAvailableUsers() {
+    $('#available-users-list').empty();
+    $('#selected-users-list').empty();
+    
+    // Get list of online users (excluding current user)
+    $('.user-online').each(function() {
+      let username = $(this).text();
+      if (username !== currentUser) {
+        $('#available-users-list').append(`
+          <div class="selectable-user" data-username="${username}">
+            <span>${username}</span>
+          </div>
+        `);
+      }
+    });
+  }
+
+  function clearChannelModal() {
+    $('#modal-channel-name').val('');
+    $('#available-users-list').empty();
+    $('#selected-users-list').empty();
+  }
 
 })
